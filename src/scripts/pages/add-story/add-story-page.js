@@ -2,6 +2,14 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { addNewStory } from '../../data/api';
 import { requireAuth } from '../../utils/auth-middleware';
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIconUrl,
+  shadowUrl: markerShadowUrl,
+});
 
 export default class AddStoryPage {
   async render() {

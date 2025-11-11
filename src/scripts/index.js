@@ -1,6 +1,16 @@
 // CSS imports
 import '../styles/styles.css';
 import App from './pages/app';
+import { registerSW } from 'virtual:pwa-register';
+
+const updateSW = registerSW({
+  onRegistered(swReg) {
+    console.log('Service Worker registered:', swReg);
+  },
+  onRegisterError(error) {
+    console.error('Service Worker registration failed:', error);
+  },
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new App({
@@ -8,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     drawerButton: document.querySelector('#drawer-button'),
     navigationDrawer: document.querySelector('#navigation-drawer'),
   });
+
   await app.renderPage();
 
   window.addEventListener('hashchange', async () => {
@@ -16,12 +27,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if ('serviceWorker' in navigator && 'PushManager' in window) {
     try {
-      const registration = await navigator.serviceWorker.register('./scripts/sw.js');
-      console.log('Service Worker registered:', registration);
-
+      const registration = await navigator.serviceWorker.ready;
+      console.log('SW ready for push notification');
       initPushNotification(registration);
     } catch (err) {
-      console.error('Service Worker registration failed:', err);
+      console.error('Service Worker setup failed:', err);
     }
   } else {
     console.warn('Browser tidak mendukung Service Worker atau Push API');
@@ -30,7 +40,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initPushNotification(registration) {
   const subscribeButton = document.querySelector('#subscribe-notification');
-
   if (!subscribeButton) return;
 
   subscribeButton.addEventListener('click', async () => {
@@ -45,12 +54,12 @@ async function initPushNotification(registration) {
           ),
         });
 
-        console.log(' Push Subscribed:', JSON.stringify(subscription));
+        console.log('🎉 Push Subscribed:', JSON.stringify(subscription));
         alert('Notifikasi berhasil diaktifkan!');
       } else if (permission === 'denied') {
-        alert(' Izin notifikasi ditolak.');
+        alert('Izin notifikasi ditolak.');
       } else {
-        alert(' Izin notifikasi belum diberikan.');
+        alert('Izin notifikasi belum diberikan.');
       }
     } catch (error) {
       console.error('Gagal mengaktifkan notifikasi:', error);

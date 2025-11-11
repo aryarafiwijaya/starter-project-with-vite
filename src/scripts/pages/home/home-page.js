@@ -3,6 +3,17 @@ import 'leaflet/dist/leaflet.css';
 import { getAllStories } from '../../data/api';
 import { showFormattedDate } from '../../utils';
 import { isLoggedIn } from '../../utils/auth';
+import Idb from '../../data/idb';
+
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIconUrl,
+  shadowUrl: markerShadowUrl,
+});
 
 export default class HomePage {
   async render() {
@@ -33,17 +44,32 @@ export default class HomePage {
     }
 
     const token = localStorage.getItem('authToken');
+    let stories = [];
 
     try {
-      const response = await getAllStories(token, 1, 10, 0);
-      console.log('Response getAllStories:', response);
+      if (navigator.onLine) {
+        console.log('Mode online: ambil data dari API...');
+        const response = await getAllStories(token, 1, 10, 0);
 
-      if (!response || response.error) {
-        storiesContainer.innerHTML = `<p>Gagal memuat story: ${response?.message || 'Tidak diketahui.'}</p>`;
-        return;
+        if (!response || response.error) {
+          throw new Error(response?.message || 'Gagal memuat story.');
+        }
+
+        stories = response.listStory || [];
+
+        await Idb.clearAllStories();
+        for (const story of stories) {
+          await Idb.putStory(story);
+        }
+      } else {
+        console.log('Mode offline: ambil data dari IndexedDB...');
+        stories = await Idb.getAllStories();
+
+        const offlineMsg = document.createElement('p');
+        offlineMsg.textContent = '(Menampilkan data offline)';
+        offlineMsg.style.color = 'gray';
+        storiesContainer.before(offlineMsg);
       }
-
-      const stories = response.listStory || [];
 
       if (stories.length === 0) {
         storiesContainer.innerHTML = '<p>Belum ada story.</p>';

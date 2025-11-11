@@ -1,2 +1,3 @@
-APP_URL=<url_aplikasi>
-MAP_SERVICE_API_KEY=<api_key>
+https://aryarafiwijaya.github.io/starter-project-with-vite/
+
+
